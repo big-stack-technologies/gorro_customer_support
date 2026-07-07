@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Search, User, Mail, BarChart3, Tag, Users, X } from "lucide-react";
+import { Search, User, Mail, BarChart3, Tag, Users, X, Menu } from "lucide-react";
 
 interface Ticket {
   id: number;
@@ -26,6 +26,8 @@ export default function Dashboard() {
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [updatingTicket, setUpdatingTicket] = useState(false);
   const [closeRemarks, setCloseRemarks] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("All");
 
   const updateTicketStatus = async (ticketId: number, action: "accept" | "close") => {
     try {
@@ -128,6 +130,14 @@ export default function Dashboard() {
   ];
 
   const filteredTickets = Array.isArray(tickets) ? tickets.filter((ticket) => {
+    // Category filter
+    if (selectedCategory !== "All") {
+      if (selectedCategory === "Open" && mapStatus(ticket.status) !== "open") return false;
+      if (selectedCategory === "In Progress" && mapStatus(ticket.status) !== "snoozed") return false;
+      if (selectedCategory === "Resolved" && mapStatus(ticket.status) !== "closed") return false;
+    }
+
+    // Search filter
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     return (
@@ -166,11 +176,31 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Gorro</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Ticket Support</p>
+      <aside
+        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transform transition-transform duration-300 ease-in-out ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }`}
+      >
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Gorro</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Ticket Support</p>
+          </div>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-300"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         <nav className="flex-1 p-4 space-y-2">
@@ -191,10 +221,19 @@ export default function Dashboard() {
             {ticketCategories.map((category) => (
               <button
                 key={category.name}
-                className="w-full flex items-center justify-between px-4 py-2 text-left rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-300"
+                onClick={() => setSelectedCategory(category.name)}
+                className={`w-full flex items-center justify-between px-4 py-2 text-left rounded-lg transition-colors ${
+                  selectedCategory === category.name
+                    ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                    : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                }`}
               >
                 <span className="font-medium">{category.name}</span>
-                <span className="text-sm bg-gray-200 dark:bg-gray-600 px-2 py-0.5 rounded-full">
+                <span className={`text-sm px-2 py-0.5 rounded-full ${
+                  selectedCategory === category.name
+                    ? "bg-blue-200 dark:bg-blue-800"
+                    : "bg-gray-200 dark:bg-gray-600"
+                }`}>
                   {category.count}
                 </span>
               </button>
@@ -213,17 +252,25 @@ export default function Dashboard() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-8 overflow-auto">
+      <main className="flex-1 p-4 md:p-8 overflow-auto">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h2>
-              <p className="text-gray-600 dark:text-gray-400">{`Welcome back! Here's what's happening. `}</p>
+          <div className="flex items-center justify-between mb-6 md:mb-8">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-300"
+              >
+                <Menu className="w-6 h-6" />
+              </button>
+              <div>
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h2>
+                <p className="text-gray-600 dark:text-gray-400 text-sm md:text-base">{`Welcome back! Here's what's happening. `}</p>
+              </div>
             </div>
             <button
               onClick={handleLogout}
-              className="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors font-medium"
+              className="px-3 py-2 md:px-4 md:py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors font-medium text-sm"
             >
               Logout
             </button>
@@ -260,19 +307,19 @@ export default function Dashboard() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white">Recent Tickets</h3>
               
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
                 <div className="relative w-full sm:w-64">
                   <input
                     type="text"
                     placeholder="Search tickets..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-sm"
                   />
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 </div>
 
-                <a href="#" className="text-blue-600 hover:text-blue-500 dark:text-blue-400 font-medium whitespace-nowrap">
+                <a href="#" className="text-blue-600 hover:text-blue-500 dark:text-blue-400 font-medium whitespace-nowrap text-sm">
                   See All
                 </a>
               </div>
@@ -296,7 +343,7 @@ export default function Dashboard() {
               </div>
             ) : (
               /* Ticket Columns */
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
                 {/* Open Tickets */}
                 <div>
                   <div className="flex items-center gap-2 mb-4">
@@ -422,12 +469,11 @@ export default function Dashboard() {
       {/* Ticket Detail Modal */}
       {selectedTicket && (
         <div
-          // className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-          className="fixed inset-0  bg-black/50 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
           onClick={() => setSelectedTicket(null)}
         >
           <div
-            className="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+            className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
