@@ -142,7 +142,7 @@ export default function Customers() {
       <main className="flex-1 p-4 md:p-8 overflow-y-auto">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 md:mb-8 gap-4">
+          <div className="flex items-center justify-between mb-6 md:mb-8">
             <div>
               <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Customers</h2>
               <p className="text-gray-600 dark:text-gray-400 text-sm md:text-base">Manage your customer base</p>
