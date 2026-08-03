@@ -30,6 +30,7 @@ interface Meta {
 export default function Customers() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,6 +42,19 @@ export default function Customers() {
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      // Reset to page 1 when search changes
+      if (searchQuery !== debouncedSearch) {
+        setCurrentPage(1);
+      }
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   const fetchCustomers = async () => {
     try {
       setLoading(true);
@@ -49,7 +63,16 @@ export default function Customers() {
         throw new Error("No authentication token found. Please login again.");
       }
 
-      const response = await fetch(`https://gorro.online/admin/users?page=${currentPage}&limit=${rowsPerPage}`, {
+      // Build URL with search parameter if search query exists
+      let url = `https://gorro.online/admin/users?page=${currentPage}&limit=${rowsPerPage}`;
+      
+      // When searching, fetch more results to get better matches
+      if (debouncedSearch.trim()) {
+        // Fetch up to 100 results when searching for better client-side filtering
+        url = `https://gorro.online/admin/users?page=1&limit=100&search=${encodeURIComponent(debouncedSearch.trim())}`;
+      }
+
+      const response = await fetch(url, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -65,8 +88,39 @@ export default function Customers() {
       }
 
       const data = await response.json();
-      setCustomers(Array.isArray(data.data) ? data.data : []);
-      setMeta(data.meta || null);
+      
+      // Get the raw data from API
+      let rawCustomers = Array.isArray(data.data) ? data.data : [];
+      
+      // If searching, apply strict client-side filter (backend search seems broken)
+      if (debouncedSearch.trim()) {
+        const query = debouncedSearch.toLowerCase().trim();
+        rawCustomers = rawCustomers.filter((customer: Customer) => {
+          return (
+            customer.firstName?.toLowerCase().includes(query) ||
+            customer.lastName?.toLowerCase().includes(query) ||
+            customer.email?.toLowerCase().includes(query) ||
+            customer.phoneNumber?.includes(query)
+          );
+        });
+        
+        // Update meta to reflect filtered results
+        if (data.meta) {
+          setMeta({
+            ...data.meta,
+            total: rawCustomers.length,
+            page: 1,
+            limit: rawCustomers.length,
+            totalPages: 1,
+            hasNextPage: false,
+            hasPreviousPage: false
+          });
+        }
+      } else {
+        setMeta(data.meta || null);
+      }
+      
+      setCustomers(rawCustomers);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -81,7 +135,7 @@ export default function Customers() {
       return;
     }
     fetchCustomers();
-  }, [router, currentPage, rowsPerPage]);
+  }, [router, currentPage, rowsPerPage, debouncedSearch]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -108,17 +162,6 @@ export default function Customers() {
     setShowViewModal(true);
     setActionDropdown(null);
   };
-
-  const filteredCustomers = customers.filter((customer) => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      customer.firstName.toLowerCase().includes(query) ||
-      customer.lastName.toLowerCase().includes(query) ||
-      (customer.email && customer.email.toLowerCase().includes(query)) ||
-      customer.phoneNumber.includes(query)
-    );
-  });
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -165,9 +208,25 @@ export default function Customers() {
                   placeholder="Search customers..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-sm"
+                  className="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-sm"
                 />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
               </div>
+              {debouncedSearch && (
+                <p className="text-sm text-blue-600 dark:text-blue-400">
+                  {customers.length > 0 
+                    ? `Found ${customers.length} customer${customers.length !== 1 ? 's' : ''} matching "${debouncedSearch}"`
+                    : `No customers found matching "${debouncedSearch}"`
+                  }
+                </p>
+              )}
             </div>
 
             {/* Table */}
@@ -183,9 +242,11 @@ export default function Customers() {
                   <p className="text-sm">{error}</p>
                 </div>
               </div>
-            ) : filteredCustomers.length === 0 ? (
+            ) : customers.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-gray-600 dark:text-gray-400">No customers found</p>
+                <p className="text-gray-600 dark:text-gray-400">
+                  {searchQuery ? "No customers found matching your search" : "No customers found"}
+                </p>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -201,7 +262,7 @@ export default function Customers() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredCustomers.map((customer) => (
+                    {customers.map((customer) => (
                       <tr
                         key={customer.id}
                         className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
@@ -264,7 +325,7 @@ export default function Customers() {
             )}
 
             {/* Pagination */}
-            {!loading && !error && filteredCustomers.length > 0 && meta && (
+            {!loading && !error && customers.length > 0 && meta && !debouncedSearch && (
               <div className="flex flex-col md:flex-row items-center justify-between mt-6 gap-4">
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Showing {((meta.page - 1) * meta.limit) + 1} to {Math.min(meta.page * meta.limit, meta.total)} of {meta.total} entries
