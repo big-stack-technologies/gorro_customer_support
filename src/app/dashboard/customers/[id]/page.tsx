@@ -34,6 +34,19 @@ interface CustomerDetail {
   cgaSince?: string;
 }
 
+interface WalletData {
+  ownerId: string;
+  internalAccountNumber: string;
+  balanceMinorUnits: number;
+  balanceMajorUnits: number;
+  nubans: Array<{
+    accountNumber: string;
+    accountName: string;
+    bankName: string;
+    bankCode: string;
+  }>;
+}
+
 export default function CustomerDetail() {
   const router = useRouter();
   const params = useParams();
@@ -61,6 +74,46 @@ export default function CustomerDetail() {
   const [provider, setProvider] = useState<string>("fincra");
   const [providers, setProviders] = useState<any[]>([]);
   const [loadingProviders, setLoadingProviders] = useState(false);
+  const [walletData, setWalletData] = useState<WalletData | null>(null);
+  const [loadingWallet, setLoadingWallet] = useState(false);
+
+  const fetchWalletData = async () => {
+    try {
+      setLoadingWallet(true);
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found. Please login again.");
+      }
+
+      const response = await fetch(`https://gorro.online/wallet/main/${customerId}`, {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error("Unauthorized. Please login again.");
+        }
+        if (response.status === 404) {
+          // Wallet not found, set to null
+          setWalletData(null);
+          return;
+        }
+        throw new Error(`Failed to fetch wallet data: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      setWalletData(data);
+    } catch (err) {
+      console.error("Failed to fetch wallet data:", err);
+      setWalletData(null);
+    } finally {
+      setLoadingWallet(false);
+    }
+  };
 
   const fetchProviders = async () => {
     try {
@@ -139,6 +192,7 @@ export default function CustomerDetail() {
     }
     fetchCustomerDetail();
     fetchProviders();
+    fetchWalletData();
   }, [router, customerId]);
 
   const formatDate = (dateString: string) => {
@@ -266,6 +320,9 @@ export default function CustomerDetail() {
       
       // Refetch customer data to update any related info
       await fetchCustomerDetail();
+      
+      // Refetch wallet data to show the new virtual account
+      await fetchWalletData();
       
       // Close modal after success
       setTimeout(() => {
@@ -444,6 +501,42 @@ export default function CustomerDetail() {
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">BVN</p>
                     <p className="text-gray-900 dark:text-white font-medium">{customer.bvn || "N/A"}</p>
                   </div>
+                </div>
+
+                {/* Virtual Account Information */}
+                <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <h5 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">Virtual Account</h5>
+                  {loadingWallet ? (
+                    <div className="flex items-center gap-2 text-gray-500">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
+                      <span className="text-sm">Loading...</span>
+                    </div>
+                  ) : walletData && walletData.nubans && walletData.nubans.length > 0 ? (
+                    <div className="space-y-3">
+                      {walletData.nubans.map((nuban, index) => (
+                        <div key={index} className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Account Number</p>
+                              <p className="font-mono font-bold text-gray-900 dark:text-white">{nuban.accountNumber}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Bank Name</p>
+                              <p className="text-gray-900 dark:text-white font-medium">{nuban.bankName}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Account Name</p>
+                              <p className="text-gray-900 dark:text-white font-medium">{nuban.accountName}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                      <p className="text-sm text-yellow-700 dark:text-yellow-400">No virtual account found for this customer</p>
+                    </div>
+                  )}
                 </div>
               </div>
 

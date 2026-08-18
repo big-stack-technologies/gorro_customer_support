@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-// import { Search, ChevronDown, User, Mail, Phone, Calendar, Menu, X, CreditCard, AlertCircle } from "lucide-react";
 import { Search, ChevronDown, User, Mail, Phone, Calendar, Menu, X, AlertCircle } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import Toast, { useToast } from "@/components/Toast";
@@ -463,9 +462,8 @@ export default function Customers() {
                                 </button>
                                 <button
                                   onClick={() => handleOpenVirtualAccountModal(customer)}
-                                  className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-300 rounded-b-lg flex items-center gap-2"
+                                  className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-300 rounded-b-lg"
                                 >
-                                  {/* <CreditCard className="w-4 h-4" /> */}
                                   Virtual Account
                                 </button>
                               </div>
