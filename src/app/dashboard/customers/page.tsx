@@ -41,8 +41,6 @@ export default function Customers() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [meta, setMeta] = useState<Meta | null>(null);
   const [actionDropdown, setActionDropdown] = useState<string | null>(null);
-  const [showViewModal, setShowViewModal] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [showVirtualAccountModal, setShowVirtualAccountModal] = useState(false);
   const [virtualAccountCustomer, setVirtualAccountCustomer] = useState<Customer | null>(null);
   const [provider, setProvider] = useState<string>("fincra");
@@ -167,12 +165,6 @@ export default function Customers() {
     if (customer.isFrozen) return "Frozen";
     if (!customer.emailVerified && !customer.phoneNumberVerified) return "Pending";
     return "Active";
-  };
-
-  const handleViewCustomer = (customer: Customer) => {
-    setSelectedCustomer(customer);
-    setShowViewModal(true);
-    setActionDropdown(null);
   };
 
   const handleLogout = () => {
@@ -447,7 +439,7 @@ export default function Customers() {
                           <div className="relative">
                             <button
                               onClick={() => setActionDropdown(actionDropdown === customer.id ? null : customer.id)}
-                              className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-300 text-sm flex items-center gap-2"
+                              className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-300 text-xs flex items-center gap-2"
                             >
                               Action
                               <ChevronDown className="w-4 h-4" />
@@ -455,16 +447,19 @@ export default function Customers() {
                             {actionDropdown === customer.id && (
                               <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-10">
                                 <button
-                                  onClick={() => handleViewCustomer(customer)}
-                                  className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-300 rounded-t-lg"
+                                  onClick={() => {
+                                    router.push(`/dashboard/customers/${customer.id}`);
+                                    setActionDropdown(null);
+                                  }}
+                                  className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 text-xs text-gray-700 dark:text-gray-300 rounded-t-lg"
                                 >
                                   View Details
                                 </button>
                                 <button
                                   onClick={() => handleOpenVirtualAccountModal(customer)}
-                                  className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-300 rounded-b-lg"
+                                  className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 text-xs text-gray-700 dark:text-gray-300 rounded-b-lg"
                                 >
-                                  Virtual Account
+                                 Create Virtual Account
                                 </button>
                               </div>
                             )}
@@ -519,89 +514,6 @@ export default function Customers() {
               </div>
             )}
           </div>
-
-          {/* View Modal */}
-          {showViewModal && selectedCustomer && (
-            <div
-              className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-              onClick={() => setShowViewModal(false)}
-            >
-              <div
-                className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">Customer Details</h3>
-                  <button
-                    onClick={() => setShowViewModal(false)}
-                    className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                  >
-                    <X className="w-6 h-6" />
-                  </button>
-                </div>
-                <div className="p-6 space-y-4">
-                  <div className="mb-6">
-                    <p className="text-xl font-bold text-gray-900 dark:text-white">
-                      {selectedCustomer.firstName} {selectedCustomer.lastName}
-                    </p>
-                    <p className="text-gray-600 dark:text-gray-400">{selectedCustomer.email || "No email"}</p>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Phone Number</p>
-                      <div className="flex items-center gap-2">
-                        <Phone className="w-4 h-4 text-gray-500" />
-                        <p className="text-gray-900 dark:text-white">{selectedCustomer.phoneNumber}</p>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Role</p>
-                      <p className="text-gray-900 dark:text-white capitalize">{selectedCustomer.role}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Email Verified</p>
-                      <p className="text-gray-900 dark:text-white">{selectedCustomer.emailVerified ? "Yes" : "No"}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Phone Verified</p>
-                      <p className="text-gray-900 dark:text-white">{selectedCustomer.phoneNumberVerified ? "Yes" : "No"}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Status</p>
-                      <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full ${getStatusColor(selectedCustomer)}`}></span>
-                        <p className="text-gray-900 dark:text-white">{getStatusText(selectedCustomer)}</p>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Created At</p>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-gray-500" />
-                        <p className="text-gray-900 dark:text-white">{formatDate(selectedCustomer.createdAt)}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
-                  <button
-                    onClick={() => setShowViewModal(false)}
-                    className="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
-                  >
-                    Close
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowViewModal(false);
-                      router.push(`/dashboard/customers/${selectedCustomer.id}`);
-                    }}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-                  >
-                    View Full Details
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Virtual Account Creation Modal */}
           {showVirtualAccountModal && virtualAccountCustomer && (
