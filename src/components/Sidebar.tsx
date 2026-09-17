@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { BarChart3, Tag, Users, User, X, LogOut, Target } from "lucide-react";
+import { BarChart3, User, X, LogOut, Target } from "lucide-react";
 import { ReactNode } from "react";
 
 interface SidebarItem {
@@ -36,8 +36,6 @@ export default function Sidebar({ isOpen, onClose, activePath, ticketCategories,
 
   const sidebarItems: SidebarItem[] = [
     { name: "Overview", icon: <BarChart3 className="text-xl" />, path: "/dashboard" },
-    { name: "Tags", icon: <Tag className="text-xl" />, path: "#" },
-    { name: "Agents", icon: <Users className="text-xl" />, path: "#" },
     { name: "Customers", icon: <User className="text-xl" />, path: "/dashboard/customers" },
     { name: "Marketing", icon: <Target className="text-xl" />, path: "/dashboard/marketing" },
   ];
