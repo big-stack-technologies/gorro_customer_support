@@ -18,7 +18,7 @@ anything. Provider is Fincra.
 
 This screen is for when that failed — a provider outage, a QoreID timeout, KYC
 data corrected afterwards. The customer is sitting there with no account
-number and support needs to give them one.
+number and support needs to give them one .
 
 **Today 607 active customers have no virtual account.** Most of them simply
 haven't done KYC yet (see *Who can actually be provisioned* below).
