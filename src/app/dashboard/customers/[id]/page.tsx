@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { ArrowLeft, User, Mail, Phone, Calendar, DollarSign, Shield, CheckCircle, XCircle, Clock, X, Edit, CreditCard } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
+import { getApiUrl } from "@/lib/api";
 import Toast, { useToast } from "@/components/Toast";
 
 interface CustomerDetail {
@@ -160,7 +161,7 @@ export default function CustomerDetail() {
         throw new Error("No authentication token found. Please login again.");
       }
 
-      const response = await fetch(`https://gorro.online/admin/users/${customerId}`, {
+      const response = await fetch(getApiUrl(`admin/users/${customerId}`), {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -244,7 +245,7 @@ export default function CustomerDetail() {
         throw new Error("No authentication token found. Please login again.");
       }
 
-      const response = await fetch(`https://gorro.online/admin/users/${customerId}`, {
+      const response = await fetch(getApiUrl(`admin/users/${customerId}`), {
         method: "PATCH",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -291,7 +292,7 @@ export default function CustomerDetail() {
         throw new Error("No authentication token found. Please login again.");
       }
 
-      const response = await fetch(`https://gorro.online/admin/users/${customerId}/virtual-account`, {
+      const response = await fetch(getApiUrl(`admin/users/${customerId}/virtual-account`), {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,

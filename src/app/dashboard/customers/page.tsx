@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Search, ChevronDown, User, Mail, Phone, Calendar, Menu, X, AlertCircle } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import Toast, { useToast } from "@/components/Toast";
+import { getApiUrl } from "@/lib/api";
 
 interface Customer {
   id: string;
@@ -73,12 +74,13 @@ export default function Customers() {
       }
 
       // Build URL with search parameter if search query exists
-      let url = `https://gorro.online/admin/users?page=${currentPage}&limit=${rowsPerPage}`;
+      let url = getApiUrl(`admin/users?page=${currentPage}&limit=${rowsPerPage}`);
       
       // When searching, fetch more results to get better matches
       if (debouncedSearch.trim()) {
         // Fetch up to 100 results when searching for better client-side filtering
-        url = `https://gorro.online/admin/users?page=1&limit=100&search=${encodeURIComponent(debouncedSearch.trim())}`;
+        // Only add search param if there's actual search text
+        url = getApiUrl(`admin/users?page=1&limit=100`);
       }
 
       const response = await fetch(url, {
@@ -181,7 +183,7 @@ export default function Customers() {
         throw new Error("No authentication token found. Please login again.");
       }
 
-      const response = await fetch("https://gorro.online/admin/users/virtual-account-providers", {
+      const response = await fetch(getApiUrl("admin/users/virtual-account-providers"), {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -224,7 +226,7 @@ export default function Customers() {
         throw new Error("No authentication token found. Please login again.");
       }
 
-      const response = await fetch(`https://gorro.online/admin/users/${virtualAccountCustomer.id}/virtual-account`, {
+      const response = await fetch(getApiUrl(`admin/users/${virtualAccountCustomer.id}/virtual-account`), {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -278,7 +280,7 @@ export default function Customers() {
         throw new Error("No authentication token found. Please login again.");
       }
 
-      const response = await fetch(`https://gorro.online/admin/users/${customer.id}`, {
+      const response = await fetch(getApiUrl(`admin/users/${customer.id}`), {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { getApiUrl } from "@/lib/api";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -16,7 +17,7 @@ export default function Login() {
     setError("");
 
     try {
-      const response = await fetch("https://gorro.online/auth/login", {
+      const response = await fetch(getApiUrl("auth/login"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
