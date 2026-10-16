@@ -73,14 +73,12 @@ export default function Customers() {
         throw new Error("No authentication token found. Please login again.");
       }
 
-      // Build URL with search parameter if search query exists
+      // Build URL with search parameter
       let url = getApiUrl(`admin/users?page=${currentPage}&limit=${rowsPerPage}`);
       
-      // When searching, fetch more results to get better matches
+      // When searching, add the search parameter (backend now supports it!)
       if (debouncedSearch.trim()) {
-        // Fetch up to 100 results when searching for better client-side filtering
-        // Only add search param if there's actual search text
-        url = getApiUrl(`admin/users?page=1&limit=100`);
+        url = getApiUrl(`admin/users?page=${currentPage}&limit=${rowsPerPage}&search=${encodeURIComponent(debouncedSearch.trim())}`);
       }
 
       const response = await fetch(url, {
@@ -99,39 +97,8 @@ export default function Customers() {
       }
 
       const data = await response.json();
-      
-      // Get the raw data from API
-      let rawCustomers = Array.isArray(data.data) ? data.data : [];
-      
-      // If searching, apply strict client-side filter (backend search seems broken)
-      if (debouncedSearch.trim()) {
-        const query = debouncedSearch.toLowerCase().trim();
-        rawCustomers = rawCustomers.filter((customer: Customer) => {
-          return (
-            customer.firstName?.toLowerCase().includes(query) ||
-            customer.lastName?.toLowerCase().includes(query) ||
-            customer.email?.toLowerCase().includes(query) ||
-            customer.phoneNumber?.includes(query)
-          );
-        });
-        
-        // Update meta to reflect filtered results
-        if (data.meta) {
-          setMeta({
-            ...data.meta,
-            total: rawCustomers.length,
-            page: 1,
-            limit: rawCustomers.length,
-            totalPages: 1,
-            hasNextPage: false,
-            hasPreviousPage: false
-          });
-        }
-      } else {
-        setMeta(data.meta || null);
-      }
-      
-      setCustomers(rawCustomers);
+      setCustomers(Array.isArray(data.data) ? data.data : []);
+      setMeta(data.meta || null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -362,9 +329,9 @@ export default function Customers() {
               </div>
               {debouncedSearch && (
                 <p className="text-sm text-blue-600 dark:text-blue-400">
-                  {customers.length > 0 
-                    ? `Found ${customers.length} customer${customers.length !== 1 ? 's' : ''} matching "${debouncedSearch}"`
-                    : `No customers found matching "${debouncedSearch}"`
+                  {meta 
+                    ? `Found ${meta.total} customer${meta.total !== 1 ? 's' : ''} matching "${debouncedSearch}"`
+                    : `Searching for "${debouncedSearch}"...`
                   }
                 </p>
               )}
@@ -475,7 +442,7 @@ export default function Customers() {
             )}
 
             {/* Pagination */}
-            {!loading && !error && customers.length > 0 && meta && !debouncedSearch && (
+            {!loading && !error && customers.length > 0 && meta && (
               <div className="flex flex-col md:flex-row items-center justify-between mt-6 gap-4">
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Showing {((meta.page - 1) * meta.limit) + 1} to {Math.min(meta.page * meta.limit, meta.total)} of {meta.total} entries
