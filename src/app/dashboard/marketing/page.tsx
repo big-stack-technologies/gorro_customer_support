@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Target, Users, Download, ChevronRight, TrendingDown, TrendingUp, DollarSign, Menu, RefreshCw } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
+import { getApiUrl } from "@/lib/api";
 
 interface Segment {
   key: string;
@@ -35,7 +36,7 @@ export default function MarketingSegments() {
         throw new Error("No authentication token found. Please login again.");
       }
 
-      const response = await fetch(`https://gorro.online/admin/marketing/segments`, {
+      const response = await fetch(getApiUrl("admin/marketing/segments"), {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -77,7 +78,7 @@ export default function MarketingSegments() {
       }
 
       const response = await fetch(
-        `https://gorro.online/admin/marketing/segments/${segmentKey}/export`,
+        getApiUrl(`admin/marketing/segments/${segmentKey}/export`),
         {
           method: "GET",
           headers: {

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { ArrowLeft, User, Mail, Phone, Calendar, DollarSign, Download, ChevronLeft, ChevronRight } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
+import { getApiUrl } from "@/lib/api";
 
 interface SegmentUser {
   userId: string;
@@ -67,7 +68,7 @@ export default function SegmentDetails() {
       });
 
       const response = await fetch(
-        `https://gorro.online/admin/marketing/segments/${segmentKey}?${params}`,
+        getApiUrl(`admin/marketing/segments/${segmentKey}?${params}`),
         {
           method: "GET",
           headers: {
@@ -111,7 +112,7 @@ export default function SegmentDetails() {
       }
 
       const response = await fetch(
-        `https://gorro.online/admin/marketing/segments/${segmentKey}/export`,
+        getApiUrl(`admin/marketing/segments/${segmentKey}/export`),
         {
           method: "GET",
           headers: {

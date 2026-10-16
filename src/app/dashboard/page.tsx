@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Search, User, Mail, X, Menu } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
+import { getApiUrl } from "@/lib/api";
 
 interface Ticket {
   id: number;
@@ -39,8 +40,8 @@ export default function Dashboard() {
       }
 
       const endpoint = action === "accept"
-        ? `https://gorro.online/tickets/${ticketId}/accept`
-        : `https://gorro.online/tickets/${ticketId}/close`;
+        ? getApiUrl(`tickets/${ticketId}/accept`)
+        : getApiUrl(`tickets/${ticketId}/close`);
 
       const body = action === "accept"
         ? undefined
@@ -83,7 +84,7 @@ export default function Dashboard() {
         throw new Error("No authentication token found. Please login again.");
       }
 
-      const response = await fetch("https://gorro.online/tickets", {
+      const response = await fetch(getApiUrl("tickets"), {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,

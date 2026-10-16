@@ -86,7 +86,7 @@ export default function CustomerDetail() {
         throw new Error("No authentication token found. Please login again.");
       }
 
-      const response = await fetch(`https://gorro.online/wallet/main/${customerId}`, {
+      const response = await fetch(getApiUrl(`wallet/main/${customerId}`), {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -124,7 +124,7 @@ export default function CustomerDetail() {
         throw new Error("No authentication token found. Please login again.");
       }
 
-      const response = await fetch("https://gorro.online/admin/users/virtual-account-providers", {
+      const response = await fetch(getApiUrl("admin/users/virtual-account-providers"), {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,
