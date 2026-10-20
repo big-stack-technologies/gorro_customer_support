@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { ArrowLeft, User, Mail, Phone, Calendar, DollarSign, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, User, Mail, Phone, Calendar, DollarSign, Download, ChevronLeft, ChevronRight, Search, X } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import { getApiUrl } from "@/lib/api";
 
@@ -52,6 +52,21 @@ export default function SegmentDetails() {
   const [currentPage, setCurrentPage] = useState(1);
   const [limit] = useState(50);
   const [exporting, setExporting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      // Reset to page 1 when search changes
+      if (searchQuery !== debouncedSearch) {
+        setCurrentPage(1);
+      }
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const fetchSegmentUsers = async () => {
     try {
@@ -66,6 +81,11 @@ export default function SegmentDetails() {
         page: currentPage.toString(),
         limit: limit.toString(),
       });
+
+      // Add search parameter if there's a search query
+      if (debouncedSearch.trim()) {
+        params.append('search', debouncedSearch.trim());
+      }
 
       const response = await fetch(
         getApiUrl(`admin/marketing/segments/${segmentKey}?${params}`),
@@ -101,7 +121,7 @@ export default function SegmentDetails() {
       return;
     }
     fetchSegmentUsers();
-  }, [router, segmentKey, currentPage]);
+  }, [router, segmentKey, currentPage, debouncedSearch]);
 
   const handleExport = async () => {
     try {
@@ -216,7 +236,7 @@ export default function SegmentDetails() {
           {/* Summary */}
           {segmentData && (
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
                 <div>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Users</p>
                   <p className="text-lg md:text-xl font-bold text-gray-900 dark:text-white">
@@ -242,6 +262,35 @@ export default function SegmentDetails() {
                   </p>
                 </div>
               </div>
+
+              {/* Search Bar */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  type="text"
+                  placeholder="Search by name, email, or phone..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-sm"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              {debouncedSearch && (
+                <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                  {segmentData.total > 0
+                    ? `Found ${segmentData.total} user${segmentData.total !== 1 ? 's' : ''} matching "${debouncedSearch}"`
+                    : `No users found matching "${debouncedSearch}"`
+                  }
+                </p>
+              )}
             </div>
           )}
 
